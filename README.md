@@ -1,12 +1,14 @@
 # Stager
 
-[GitHub pages] is a free service for compiling and serving static sites.
+[GitHub Pages](https://pages.github.com/) is a free service for compiling and serving static sites.
 
-This thing does exactly what github pages does except for _all_ your project's branches, not just `master` or `gh-pages`. So it's useful for staging changes.
+This thing does exactly what GitHub Pages does except for _all_ your project's branches, not just `master` or `gh-pages`. So it's useful for previewing speculative changes or work in progress.
 
-The downside is that you have to host this yourself and it only works on Heroku right now. Assuming the dyno doesn't see much traffic - a reasonable assumption for a staging server - it shouldn't cost you anything but right now it's a technical pain in the ass to set one up.
+The downside is that you have to host this yourself and it only works on [Heroku](heroku.com)
+right now. Assuming the dyno doesn't see much traffic - a reasonable assumption for a staging
+server - it shouldn't cost you anything.
 
-Godspeed.
+However, right now it's a technical pain in the ass to set one of these up. Godspeed.
 
 ### Preinstall - Jekyll
 
@@ -45,7 +47,7 @@ variable and leaving around on disk. I recommend creating one this way:
 3. Now go back to the incognito window, go to "settings", then "applications" then create a
    "personal access token" and name it something like `myorg-blog-stager`. Turn off all
    permissions except "repo"
-4. Copy that token into `config.sh`
+4. Copy that token and save it somewhere
 
 ### Install:
 
@@ -54,7 +56,7 @@ Copy `config.sh.example` to `config.sh`, fill it out, then run:
     ./bin/deploy
 
 If there were no errors reported then visit either `http://master.{{your domain}}` or
-`http://gh-pages.{{your domain}}` (depending on how your site is configured on GitHub) to check that it worked. Other branches should also work.
+`http://gh-pages.{{your domain}}` (depending on how your site is configured on GitHub) to check that it worked. Other branche names should also work.
 
 ### Post install:
 
