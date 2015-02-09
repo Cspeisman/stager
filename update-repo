@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# Fetch the site's repo
+
+# Idempotent, creates a clone if none exists, updates it if it does
+
+set -e # exit if any command fails
+
+# ## Data
+
+dir=$(cd $(dirname $0); pwd)
+
+# Load config if present (for local development)
+[[ -f $dir/config.sh ]] && source $dir/config.sh
+
+github_repo="github.com/$GITHUB_REPO"
+credentials="$GITHUB_ACCESS_TOKEN:x-oauth-basic"
+repo_url="https://$credentials@$github_repo"
+commiter_name="Bob the Builder"
+commiter_email="can.we.fix.it@probably.not"
+
+# ## Mechanics
+
+cd $dir # work in this dir
+
+if [[ -d 'repo' ]]; then
+  cd 'repo'
+  # fetch latest code and prune local refs to branches no longer on origin
+  git fetch --prune
+else
+  git clone $repo_url 'repo'
+  cd 'repo'
+  # set git user name
+  git config user.name  "$commiter_name"
+  git config user.email "$commiter_email"
+  # make empty commit
+  true | git mktree | xargs git commit-tree | xargs git tag 'empty'
+  git checkout -q 'empty'
+fi

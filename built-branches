@@ -1,0 +1,15 @@
+#!/bin/sh
+
+# List only the branches that represent local builds
+
+set -e # exit if any command fails
+
+dir=$(cd $(dirname $0); pwd)
+
+# work in repo dir
+cd $dir/'repo'
+
+git show-ref |
+grep build- |
+sed 's/.*refs\/heads\/build-//' |
+sort

@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+
+# Installs/Updates stager on a heroku dyno
+
+set -e # exit if any command fails
+
+# Resolve the project directory
+project_dir=$(cd $(dirname $0)/..; pwd)
+
+# Load app-specific environment variables
+source $project_dir/config.sh
+
+# ---
+
+function abort {
+  echo "Error:" $1 1>&2
+  exit 1
+}
+
+function ensure-config {
+  [[ ${!1} ]] || abort "Set $1 in config.sh"
+}
+
+function heroku-has-remote {
+  git remote | grep -q heroku
+}
+
+function heroku-add-remote {
+  git remote add heroku git@heroku.com:$HEROKU_APP.git
+}
+
+function heroku-app-name-is-configured {
+  [[ $HEROKU_APP ]]
+}
+
+function heroku-config {
+  [[ "$(heroku config:get $1)" = "${!1}" ]] || heroku config:set $1=${!1}
+}
+
+function heroku-domains-are-set {
+  local domains="$(heroku domains | grep branch.demo.mutible.co | sort | paste -s -d ' ' -)"
+  [[ "$domains" = "*.$DOMAIN $DOMAIN" ]]
+}
+
+# ---
+
+if [[ '-' = $1 ]]; then # for testing, e.g. ./deploy - ensure-config HEROKU_APP
+  $2 ${*:3}
+else
+  # todo: ensure heroku command line tools
+  ensure-config HEROKU_APP
+  heroku-has-remote || heroku-add-remote
+  BUILDPACK_URL=https://github.com/ddollar/heroku-buildpack-multi.git
+  heroku-config BUILDPACK_URL
+  INIT_ON_SERVER_START=true
+  heroku-config INIT_ON_SERVER_START
+  ensure-config DOMAIN && heroku-config DOMAIN
+  ensure-config GITHUB_REPO && heroku-config GITHUB_REPO
+  ensure-config GITHUB_ACCESS_TOKEN && heroku-config GITHUB_ACCESS_TOKEN
+  ensure-config DOMAIN && heroku-domains-are-set ||
+    abort "Heroku app not configured to serve to $DOMAIN and *.$DOMAIN"
+
+  # deploy code ...
+  git push heroku master
+  # show the logs in case there are any errors
+  heroku logs -t
+fi

@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# Remove local build branches that don't have corresponding remote branches
+
+dir=$(cd $(dirname $0); pwd)
+
+# work in repo dir
+cd $dir/'repo'
+
+function built-branches-that-have-been-deleted-from-remote {
+  comm -23 <($dir/built-branches) <($dir/list-branches) | sed 's/^/build-/'
+}
+
+while read branch_name; do
+  git branch -D $branch_name
+done < <(built-branches-that-have-been-deleted-from-remote)
+

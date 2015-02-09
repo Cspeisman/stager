@@ -1,0 +1,61 @@
+#!/bin/bash
+
+# Builds a branch then checks that build (a bunch of static html + assets)
+# into a *new* branch (suffixed with `-build`) on the local clone of
+# the site's repo.
+#
+# The build is checked into the repo because the repo is used as a database
+# by this app. The web server never reads files from disk, it reads them
+# as blobs from git's object database.
+#
+# This architecture trades speed for disk space. This allows 10 branches
+# of a 160MB site like DBC's to fit on 100MB of disk instead of the 1.6GB
+# it would take to store each branch in it's own folder.
+#
+# The trade-off is that it costs a CPU time to locate and decompress
+# a specific path like `some-branch:_site/index.html` from a git object db
+# as opposed to just reading it straight from some path on disk.
+#
+# If a branch hasn't been updated since the last time it was built it won't
+# be re-built
+
+set -e # exit if any command fails
+
+dir=$(cd $(dirname $0); pwd)
+
+branch_name=$1
+build_branch_name="build-$branch_name"
+
+# Work in repo dir
+cd $dir/'repo'
+
+# Exit if already built:
+#  - build branch exists; and
+#  - build id file exists; and
+#  - build id file points to second-most-recent commit of build branch
+git show-ref --verify --quiet "refs/heads/$build_branch_name" &&
+git cat-file -e "$build_branch_name:built-from.sha" &&
+[[ $(git cat-file blob "$build_branch_name:built-from.sha") = \
+   $(git show-ref -s origin/$branch_name) ]] &&
+exit
+
+# Create the build branch if it doesn't exist
+git show-ref --verify --quiet "refs/heads/$build_branch_name" ||
+git branch --no-track $build_branch_name "origin/$branch_name"
+
+# Switch to build branch
+git checkout -q $build_branch_name
+# Update it to the latest code
+git reset --hard "origin/$branch_name"
+
+# Kill old build
+rm -rf _site
+
+bundle #--quiet
+bundle exec jekyll build
+
+git add -f _site # Force adding because _site is gitignored
+build_sha=$(git show-ref -s origin/$branch_name | tee built-from.sha)
+git add built-from.sha
+
+git commit -m "New build from: $branch_name ($build_sha)"

@@ -1,0 +1,30 @@
+#!/bin/sh
+
+set -e # exit if any command fails
+
+# Resolve the project directory
+project_dir=$(cd $(dirname $0)/..; pwd)
+
+# Ensure developer's current environment can run this app
+$project_dir/bin/dev-check --quiet
+
+# ---
+
+# Load config into environment (these variables are already present in production)
+source $project_dir/config.sh
+
+export PORT=4123
+export USE_LOCAL_TLD=yes
+
+# ---
+
+echo "Building branches ..."
+
+# Update the repo & branch checkouts
+./update
+
+# Update the local-tld config with all the branch aliases
+./list-branches | tr / . | xargs local-tld $DOMAIN $PORT
+
+# Start the server then replace this process with that process
+exec $project_dir/bin/server

@@ -1,0 +1,17 @@
+#!/bin/sh
+
+# List only the branches on the remote
+
+set -e # exit if any command fails
+
+dir=$(cd $(dirname $0); pwd)
+
+# work in repo dir
+cd $dir/'repo'
+
+# there's probably a way to make `git branch` do this but I couldn't figure it out
+git show-ref |
+grep remotes/origin |
+grep -v -e origin/HEAD |
+sed 's/.*remotes\/origin\///' |
+sort

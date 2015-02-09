@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# Start initializer in background if INIT_ON_SERVER_START set
+[ $INIT_ON_SERVER_START ] && ./init &
+
+exec node server.js

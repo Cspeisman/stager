@@ -1,0 +1,22 @@
+#!/bin/sh
+
+set -e # exit if any command fails
+
+test '--quiet' = "$1" && quiet=true
+
+# Resolve the project directory
+project_dir=$(cd $(dirname $0)/..; pwd)
+
+function msg  { test $quiet || echo $1 ;}
+function fail { failed=true && echo $1 ;}
+
+# todo: check for rubby than can run jekyll
+
+msg "Checking for node.js ..."
+which -s node || fail "Install node.js: brew install node"
+
+msg "Checking for local-tld ..."
+which -s local-tld || fail "Install local-tld: npm install -g local-tld && npm install -g local-tld-tool"
+
+test $failed && exit 1
+msg "Everything looks good to go"
